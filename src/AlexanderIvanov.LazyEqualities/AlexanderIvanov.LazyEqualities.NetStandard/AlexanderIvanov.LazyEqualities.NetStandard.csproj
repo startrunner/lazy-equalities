@@ -2,8 +2,8 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <RootNamespace>AlexanderIvanov.LazyEquality</RootNamespace>
-    <AssemblyName>AlexanderIvanov.LazyEquality</AssemblyName>
+    <RootNamespace>AlexanderIvanov.LazyEqualities</RootNamespace>
+    <AssemblyName>AlexanderIvanov.LazyEqualities.NetStandard</AssemblyName>
   </PropertyGroup>
 
 </Project>

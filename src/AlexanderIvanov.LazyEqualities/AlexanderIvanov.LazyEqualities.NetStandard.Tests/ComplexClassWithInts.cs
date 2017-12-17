@@ -3,11 +3,13 @@ using System.Diagnostics;
 using AlexanderIvanov.LazyEqualities;
 using Newtonsoft.Json;
 
-namespace AlexanderIvanov.LazyEqualityTests
+namespace AlexanderIvanov.LazyEqualities.NetStandard.Tests
 {
     class ComplexClassWithInts
     {
         static Random RandomStatic = new Random(1337);
+
+        readonly int hashCode = RandomStatic.Next();
 
         public int a = RandomStatic.Next();
         public int b = RandomStatic.Next();
@@ -42,7 +44,9 @@ namespace AlexanderIvanov.LazyEqualityTests
             return result;
         }
 
-        public override int GetHashCode() => throw new NotImplementedException();
+        public override int GetHashCode() => hashCode;
+
+        public ComplexClassWithInts(int randomSeed) : this(new Random(randomSeed)) { }
 
         public ComplexClassWithInts(Random rand)
         {

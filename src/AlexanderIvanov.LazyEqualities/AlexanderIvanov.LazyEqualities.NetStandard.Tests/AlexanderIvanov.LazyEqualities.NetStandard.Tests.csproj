@@ -5,9 +5,9 @@
 
     <IsPackable>false</IsPackable>
 
-    <RootNamespace>AlexanderIvanov.LazyEqualityTests</RootNamespace>
+    <RootNamespace>AlexanderIvanov.LazyEqualities.NetStandard.Tests</RootNamespace>
 
-    <AssemblyName>AlexanderIvanov.LazyEqualityTests</AssemblyName>
+    <AssemblyName>AlexanderIvanov.LazyEqualities.NetStandard.Tests</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>
@@ -19,6 +19,12 @@
 
   <ItemGroup>
     <ProjectReference Include="..\AlexanderIvanov.LazyEqualities.NetStandard\AlexanderIvanov.LazyEqualities.NetStandard.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="xunit.runner.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

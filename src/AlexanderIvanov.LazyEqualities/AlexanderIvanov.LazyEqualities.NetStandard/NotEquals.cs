@@ -4,14 +4,50 @@ using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Threading;
 
 namespace AlexanderIvanov.LazyEqualities
 {
     internal static class NotEquals<T>
     {
+        static int CompareNotEqualManuallyCalledFlag = 0;
         static readonly EqualityFunction<T> NotEqualsFunction = GenerateNotEqualsFunction(typeof(T));
 
-        public static bool CompareNotEqual(T x, T y)
+        public static bool CompareNotEqualsManual(T x, T y)
+        {
+            bool firstCall = Interlocked.CompareExchange(ref CompareNotEqualManuallyCalledFlag, 1, 0) == 0;
+#if DEBUG
+            firstCall = true;
+#endif
+
+            if (firstCall) { CheckForIEquatableFuckup(typeof(T)); }
+            return CompareNotEquals(x, y);
+        }
+
+        private static void CheckForIEquatableFuckup(Type type)
+        {
+            Type equatableInterface = typeof(IEquatable<>).MakeGenericType(type);
+            bool hasInterface = type.GetInterfaces().Any(x => x == equatableInterface);
+            bool hasAttribute = type.GetCustomAttributes<EquatableDependsOnLazyComparison>().Any();
+
+            if (!hasInterface && hasAttribute)
+            {
+                throw new InvalidOperationException(
+                    $"Type {type} has attribute {typeof(EquatableDependsOnLazyComparison)}" +
+                    $" without implementing the {equatableInterface} interface."
+                );
+            }
+
+            if (hasInterface && !hasAttribute)
+            {
+                throw new InvalidOperationException(
+                    $"Type {type} cannot make use of lazy comparison for the implementation of " +
+                    $"{equatableInterface} without having the {typeof(EquatableDependsOnLazyComparison)} attribute."
+                );
+            }
+        }
+
+        public static bool CompareNotEquals(T x, T y)
         {
             if (ReferenceEquals(x, y)) { return false; }
             if (ReferenceEquals(x, null) != ReferenceEquals(y, null)) { return true; }//one is null
@@ -38,7 +74,7 @@ namespace AlexanderIvanov.LazyEqualities
                 TryGenerateMemberwise(type, ref result)
             ))
             {
-                throw new NotImplementedException();
+                throw new NotImplementedException("Could not handle lazy comparison.");
             }
 
             return result;
@@ -46,9 +82,12 @@ namespace AlexanderIvanov.LazyEqualities
 
         private static bool TryGenerateForIEquatable(Type type, ref EqualityFunction<T> result)
         {
+
             Type equatableInterface = typeof(IEquatable<>).MakeGenericType(type);
             bool implements = type.GetInterfaces().Any(x => x == equatableInterface);
             if (!implements) { return false; }
+
+            if (type.GetCustomAttributes<EquatableDependsOnLazyComparison>().Any()) { return false; }
 
             ParameterExpression left = Expression.Parameter(type, "x");
             ParameterExpression right = Expression.Parameter(type, "y");
@@ -81,7 +120,7 @@ namespace AlexanderIvanov.LazyEqualities
             ParameterExpression left = Expression.Parameter(type, nameof(left));
             ParameterExpression right = Expression.Parameter(type, nameof(right));
 
-            Expression<EqualityFunction<T>> resultExpression = Expression.Lambda<EqualityFunction<T>>(
+            result = Expression.Lambda<EqualityFunction<T>>(
                 properties.Aggregate(
                     fields.Aggregate(
                         Expression.Constant(false) as Expression,
@@ -112,8 +151,7 @@ namespace AlexanderIvanov.LazyEqualities
                     )
                 ),
                 parameters: new[] { left, right }
-            );
-            result = resultExpression.Compile();
+            ).Compile();
 
             return true;
         }
@@ -124,7 +162,8 @@ namespace AlexanderIvanov.LazyEqualities
 
             Type enumerableInterface =
                 type.GetInterfaces()
-                .Where(x => x.GetGenericTypeDefinition() == typeof(IEnumerable<>))
+                .Concat(new[] { type })//this one handles the case where type is IEnumerable itself
+                .Where(x => x.IsGenericType && x.GetGenericTypeDefinition() == typeof(IEnumerable<>))
                 .FirstOrDefault();
 
             if (enumerableInterface == null) { return false; }
@@ -149,7 +188,7 @@ namespace AlexanderIvanov.LazyEqualities
         private static bool DefaultNotEquals(T x, T y) => !x.Equals(y);
 
         private static MethodInfo GetNotEqualMethod(Type GenericParameter) =>
-            typeof(NotEquals<>).MakeGenericType(GenericParameter).GetMethod(nameof(CompareNotEqual));
+            typeof(NotEquals<>).MakeGenericType(GenericParameter).GetMethod(nameof(CompareNotEquals));
     }
 
     internal static class NotEquals
@@ -159,7 +198,7 @@ namespace AlexanderIvanov.LazyEqualities
         public static MethodInfo GetSequenceNotEqualMethod(Type tItem, Type tCollection) =>
             typeof(NotEquals).GetMethod(nameof(SequenceNotEqual), PublicStatic).MakeGenericMethod(tItem, tCollection);
 
-        public static MethodInfo GetEquatableCompareMethod(Type type) =>
+        public static MethodInfo GetEquatableCompareMethod(this Type type) =>
             typeof(NotEquals).GetMethod(nameof(EquatableCompareNotEquals), PublicStatic).MakeGenericMethod(type);
 
         public static bool EquatableCompareNotEquals<T>(T x, T y) where T : IEquatable<T>
@@ -188,7 +227,7 @@ namespace AlexanderIvanov.LazyEqualities
 
                 if (moveX != moveY) { return true; }
                 if (!moveX) { return false; }
-                if (NotEquals<TItem>.CompareNotEqual(xEnu.Current, yEnu.Current)) { return true; }
+                if (NotEquals<TItem>.CompareNotEquals(xEnu.Current, yEnu.Current)) { return true; }
             }
         }
 
