@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <RootNamespace>AlexanderIvanov.LazyEquality</RootNamespace>
+    <AssemblyName>AlexanderIvanov.LazyEquality</AssemblyName>
+  </PropertyGroup>
+
+</Project>
