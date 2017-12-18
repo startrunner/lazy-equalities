@@ -2,9 +2,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using AlexanderIvanov.LazyEqualities;
 
 namespace AlexanderIvanov.LazyEqualities.Win32Demo
 {
@@ -15,7 +12,7 @@ namespace AlexanderIvanov.LazyEqualities.Win32Demo
 
         public AnotherClass(int[] items)
         {
-            if ((Called++)%2==0)
+            if ((Called++) % 2 == 0)
             {
                 SomeList = items.ToList();
             }
@@ -55,7 +52,7 @@ namespace AlexanderIvanov.LazyEqualities.Win32Demo
             Console.WriteLine(new SomeClass(1, 2, 3, 3) == new SomeClass(1, 2, 3, 3));
             Console.WriteLine(new SomeClass(1, 2, 5, 5) == new SomeClass(1, 3, 5, 5));
 
-            Console.WriteLine(LazyEquality.Equals(new ArrayList(new[] { 1, 2, 3 }), new ArrayList(new[] { 1, 2, 3 })));
+            Console.WriteLine(LazyEquality.Equals<IEnumerable>(new ArrayList(new[] { 1, 2, 3 }), (new[] { 1, 2, 3 })));
             Console.WriteLine(LazyEquality.Equals(new ArrayList(new[] { 1, 2, 3 }), new ArrayList(new[] { 1, 2, 4 })));
         }
     }
