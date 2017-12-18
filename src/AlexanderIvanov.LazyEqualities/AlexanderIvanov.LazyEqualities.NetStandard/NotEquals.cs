@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -71,6 +72,7 @@ namespace AlexanderIvanov.LazyEqualities
                 TryGenerateForPrimitive(type, ref result) ||
                 TryGenerateForIEquatable(type, ref result) ||
                 TryGenerateForEnumerable(type, ref result) ||
+                TryGenerateForOldEnumerable(type, ref result) ||
                 TryGenerateMemberwise(type, ref result)
             ))
             {
@@ -78,6 +80,32 @@ namespace AlexanderIvanov.LazyEqualities
             }
 
             return result;
+        }
+
+        private static bool TryGenerateForOldEnumerable(Type type, ref EqualityFunction<T> result)
+        {
+            if (type.CustomAttributes.OfType<NotEnumerableComparisonAttribute>().Any()) { return false; }
+
+            Type enumerableInterface =
+                type.GetInterfaces()
+                .Concat(new[] { type })//this one handles the case where type is IEnumerable itself
+                .Where(x => x == typeof(IEnumerable))
+                .FirstOrDefault();
+
+            if (enumerableInterface == null) { return false; }
+
+            ParameterExpression left = Expression.Parameter(type, "x");
+            ParameterExpression right = Expression.Parameter(type, "y");
+
+            result = Expression.Lambda<EqualityFunction<T>>(
+                    Expression.Call(
+                    instance: null,
+                    method: NotEquals.GetSequenceNotEqualMethod(type),
+                    arguments: new[] { left, right }
+                ),
+                parameters: new[] { left, right }
+            ).Compile();
+            return true;
         }
 
         private static bool TryGenerateForIEquatable(Type type, ref EqualityFunction<T> result)
@@ -201,9 +229,37 @@ namespace AlexanderIvanov.LazyEqualities
         public static MethodInfo GetEquatableCompareMethod(this Type type) =>
             typeof(NotEquals).GetMethod(nameof(EquatableCompareNotEquals), PublicStatic).MakeGenericMethod(type);
 
+        public static MethodInfo GetSequenceNotEqualMethod(Type tCollection) =>
+            typeof(NotEquals).GetMethod(nameof(ObjectSequenceNotEqual), PublicStatic).MakeGenericMethod(tCollection);
+
         public static bool EquatableCompareNotEquals<T>(T x, T y) where T : IEquatable<T>
         {
             return !(x as IEquatable<T>).Equals(y);
+        }
+
+        public static bool ObjectSequenceNotEqual<TCollection>(TCollection x, TCollection y) where TCollection : IEnumerable
+        {
+            if (ReferenceEquals(x, y)) { return false; }
+            if (ReferenceEquals(x, null) != ReferenceEquals(y, null)) { return true; }
+
+            int xLen = (x as ICollection)?.Count ?? 0;
+            int yLen = (x as ICollection)?.Count ?? 0;
+
+            if (xLen != yLen) { return true; }
+
+            IEnumerator xEnu = x.GetEnumerator();
+            IEnumerator yEnu = y.GetEnumerator();
+
+            for (; ; )
+            {
+                bool moveX = xEnu.MoveNext();
+                bool moveY = yEnu.MoveNext();
+
+                if (moveX != moveY) { return true; }
+                if (!moveX) { return false; }
+                //if (NotEquals<TItem>.CompareNotEquals(xEnu.Current, yEnu.Current)) { return true; }
+                if (!xEnu.Current.Equals(yEnu.Current)) { return true; }
+            }
         }
 
 
