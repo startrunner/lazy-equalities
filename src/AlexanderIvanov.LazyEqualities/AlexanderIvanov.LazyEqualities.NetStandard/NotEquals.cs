@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Threading;
+#if DEBUG
+using System.Diagnostics;
+#endif
 
 namespace AlexanderIvanov.LazyEqualities
 {
@@ -27,14 +29,15 @@ namespace AlexanderIvanov.LazyEqualities
 
         private static void CheckForIEquatableFuckup(Type type)
         {
+            if (type.PrimitivelyComparable()) { return; }
             Type equatableInterface = typeof(IEquatable<>).MakeGenericType(type);
             bool hasInterface = type.GetInterfaces().Any(x => x == equatableInterface);
-            bool hasAttribute = type.GetCustomAttributes<EquatableDependsOnLazyComparison>().Any();
+            bool hasAttribute = type.GetCustomAttributes<EquatableDependsOnLazyComparisonAttribute>().Any();
 
             if (!hasInterface && hasAttribute)
             {
                 throw new InvalidOperationException(
-                    $"Type {type} has attribute {typeof(EquatableDependsOnLazyComparison)}" +
+                    $"Type {type} has attribute {typeof(EquatableDependsOnLazyComparisonAttribute)}" +
                     $" without implementing the {equatableInterface} interface."
                 );
             }
@@ -43,7 +46,7 @@ namespace AlexanderIvanov.LazyEqualities
             {
                 throw new InvalidOperationException(
                     $"Type {type} cannot make use of lazy comparison for the implementation of " +
-                    $"{equatableInterface} without having the {typeof(EquatableDependsOnLazyComparison)} attribute."
+                    $"{equatableInterface} without having the {typeof(EquatableDependsOnLazyComparisonAttribute)} attribute."
                 );
             }
         }
@@ -115,7 +118,7 @@ namespace AlexanderIvanov.LazyEqualities
             bool implements = type.GetInterfaces().Any(x => x == equatableInterface);
             if (!implements) { return false; }
 
-            if (type.GetCustomAttributes<EquatableDependsOnLazyComparison>().Any()) { return false; }
+            if (type.GetCustomAttributes<EquatableDependsOnLazyComparisonAttribute>().Any()) { return false; }
 
             ParameterExpression left = Expression.Parameter(type, "x");
             ParameterExpression right = Expression.Parameter(type, "y");
@@ -137,7 +140,7 @@ namespace AlexanderIvanov.LazyEqualities
         private static bool TryGenerateForPrimitive(Type type, ref EqualityFunction<T> result)
         {
             result = DefaultNotEquals;
-            return type.IsPrimitive || type.IsEnum;
+            return type.PrimitivelyComparable();
         }
 
         private static bool TryGenerateMemberwise(Type type, ref EqualityFunction<T> result)
@@ -286,6 +289,9 @@ namespace AlexanderIvanov.LazyEqualities
                 if (NotEquals<TItem>.CompareNotEquals(xEnu.Current, yEnu.Current)) { return true; }
             }
         }
+
+        internal static bool PrimitivelyComparable(this Type type) =>
+            type.IsPrimitive || type.IsEnum || type == typeof(string);
 
         internal static FieldInfo[] GetEqualityIncludedFields(this Type type)
         {

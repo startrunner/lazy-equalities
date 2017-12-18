@@ -4,7 +4,7 @@ using System.Text;
 
 namespace AlexanderIvanov.LazyEqualities.NetStandard.Tests
 {
-    [EquatableDependsOnLazyComparison]
+    [EquatableDependsOnLazyComparisonAttribute]
     class LazyIEquatableClass : IEquatable<LazyIEquatableClass>
     {
         public int X { get; }
