@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AlexanderIvanov.LazyEqualit
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AlexanderIvanov.LazyEqualities.NetStandard.Tests", "AlexanderIvanov.LazyEqualities.NetStandard.Tests\AlexanderIvanov.LazyEqualities.NetStandard.Tests.csproj", "{88653179-4284-4F53-BBA8-7E77D8D9F849}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AlexanderIvanov.LazyEqualities.Win32Demo", "AlexanderIvanov.LazyEqualities.Win32Demo\AlexanderIvanov.LazyEqualities.Win32Demo.csproj", "{A517F8A2-076E-4B04-8D72-CA0782ED200E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{88653179-4284-4F53-BBA8-7E77D8D9F849}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{88653179-4284-4F53-BBA8-7E77D8D9F849}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{88653179-4284-4F53-BBA8-7E77D8D9F849}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A517F8A2-076E-4B04-8D72-CA0782ED200E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A517F8A2-076E-4B04-8D72-CA0782ED200E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A517F8A2-076E-4B04-8D72-CA0782ED200E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A517F8A2-076E-4B04-8D72-CA0782ED200E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
