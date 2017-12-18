@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 
 namespace AlexanderIvanov.LazyEqualities.Win32Demo
 {
@@ -12,14 +13,11 @@ namespace AlexanderIvanov.LazyEqualities.Win32Demo
 
         public AnotherClass(int[] items)
         {
-            if ((Called++) % 2 == 0)
-            {
-                SomeList = items.ToList();
-            }
+            if (Interlocked.Increment(ref Called) % 2 == 0)
+            { SomeList = items.ToList(); }
+
             else
-            {
-                SomeList = new LinkedList<int>(items);
-            }
+            { SomeList = new LinkedList<int>(items); }
         }
     }
 
